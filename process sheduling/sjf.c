@@ -1,0 +1,70 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+struct process{
+    int arrival, burst, completion, turnaround, waiting, completed;
+};
+struct process pq[10];
+
+int getMinProcess(int clock, int total){
+    int minProcess;
+    for (int i=0; i<total; i++){
+        if (pq[i].arrival <= clock && pq[i].completed != 1){
+            minProcess = i;
+            break;
+        }
+    }
+    for(int i=minProcess; i<total; i++){
+        if (pq[i].arrival <= clock && pq[i].completed != 1 && pq[i].burst < pq[minProcess].burst){
+            minProcess = i;
+        }
+    }
+    return minProcess;
+}
+
+void main(){
+    int total, clock=0, completedProcess=0;
+    float avgTAT=0, avgWT=0;
+    printf("This is SJF process sheduling\n");
+    printf("Enter number of processes : ");
+    scanf("%d",&total);
+    
+    for (int i=0; i<total; i++){
+        printf("Enter process arrival time, burst time : ");
+        scanf("%d%d",&pq[i].arrival,&pq[i].burst);
+        pq[i].completed = 0;
+    }
+    for(int i=1; i<total; i++){
+        int j = i-1;
+        struct process key = pq[i];
+        while(j >= 0 && key.arrival < pq[j].arrival){
+            struct process temp = pq[j];
+            pq[j+1] = pq[j];
+            pq[j] = temp;
+            j--;
+        }
+        pq[j+1] = key;
+    }
+
+    clock = pq[0].arrival;
+    while(completedProcess < total){
+        int process = getMinProcess(clock, total);
+        pq[process].completion = pq[process].burst + clock;
+        pq[process].turnaround = pq[process].completion - pq[process].arrival;
+        pq[process].waiting = pq[process].turnaround - pq[process].burst;
+        pq[process].completed = 1;
+        clock += pq[process].burst;
+        completedProcess += 1;
+    }
+    
+    
+    printf("Id\tAT\tBT\tCT\tTAT\tWT\n");
+    for(int i=0; i<total; i++){
+        avgTAT += pq[i].turnaround;
+        avgWT += pq[i].waiting;
+        printf("%d\t%d\t%d\t%d\t%d\t%d\n", i, pq[i].arrival, pq[i].burst, pq[i].completion, pq[i].turnaround, pq[i].waiting);
+    }
+    avgTAT /= total; 
+    avgWT /= total; 
+    printf("Avg TAT : %.2f, Avg WT : %.2f", avgTAT, avgWT);
+}
